@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { login } from '@/api/auth'
 import { useAuthStore } from '@/store/useAuthStore'
 
 export function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(import.meta.env.VITE_DEMO_EMAIL ?? '')
+  const [password, setPassword] = useState(import.meta.env.VITE_DEMO_PASSWORD ?? '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore((s) => s.login)
@@ -20,6 +21,7 @@ export function LoginForm() {
     try {
       const { user, token } = await login(email, password)
       setAuth(user, token)
+      toast.success('Signed in successfully')
       navigate('/')
     } catch {
       setError('Invalid email or password.')

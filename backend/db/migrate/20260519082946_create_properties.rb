@@ -11,6 +11,7 @@ class CreateProperties < ActiveRecord::Migration[8.1]
       t.string :address
       t.decimal :latitude
       t.decimal :longitude
+      t.string :image_url
 
       t.timestamps
     end

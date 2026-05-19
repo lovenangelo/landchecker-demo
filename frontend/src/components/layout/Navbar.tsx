@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Heart, Menu } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { PropertySearchBar } from '@/components/property/PropertySearchBar'
@@ -12,21 +13,35 @@ export function Navbar() {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const watchedIds = useWatchlistIds()
+  const queryClient = useQueryClient()
 
   function handleLogout() {
     logout()
+    queryClient.removeQueries({ queryKey: ['watchlist'] })
     navigate('/')
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center gap-4">
+        {/* Hamburger — mobile left, opens left drawer */}
+        <Sheet>
+          <SheetTrigger
+            render={<Button variant="outline" size="icon" className="lg:hidden h-8 w-8 shrink-0" />}
+          >
+            <Menu className="h-4 w-4" />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 overflow-y-auto">
+            <div className="px-5 pt-10 pb-6">
+              <PropertyFilters />
+            </div>
+          </SheetContent>
+        </Sheet>
+
         {/* Logo */}
         <Link to="/" className="flex items-center gap-1.5 shrink-0 mr-2">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-xs font-bold">L</span>
-          </div>
-          <span className="font-semibold text-sm hidden sm:block">LandChecker</span>
+          <img src="/logo.png" alt="LandChecker" className="h-8 w-8 object-contain" />
+          <span className="font-semibold text-sm hidden sm:block text-navy-800">LandChecker</span>
         </Link>
 
         {/* Search */}
@@ -63,18 +78,6 @@ export function Navbar() {
               </Link>
             </>
           )}
-
-          {/* Mobile filter sheet */}
-          <Sheet>
-            <SheetTrigger
-              render={<Button variant="outline" size="icon" className="lg:hidden h-8 w-8" />}
-            >
-              <Menu className="h-4 w-4" />
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 pt-8 overflow-y-auto">
-              <PropertyFilters />
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>

@@ -1,24 +1,22 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useFilterStore } from '@/store/useFilterStore'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export function PropertySearchBar() {
   const query = useFilterStore((s) => s.query)
   const setQuery = useFilterStore((s) => s.setQuery)
   const [local, setLocal] = useState(query)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debouncedLocal = useDebounce(local, 350)
 
   useEffect(() => {
     setLocal(query)
   }, [query])
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    setLocal(val)
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(() => setQuery(val), 350)
-  }
+  useEffect(() => {
+    setQuery(debouncedLocal)
+  }, [debouncedLocal, setQuery])
 
   function clear() {
     setLocal('')
@@ -32,7 +30,7 @@ export function PropertySearchBar() {
         className="pl-9 pr-9"
         placeholder="Search by address or title…"
         value={local}
-        onChange={handleChange}
+        onChange={(e) => setLocal(e.target.value)}
       />
       {local && (
         <button

@@ -20,14 +20,16 @@ export function PropertyGrid() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useProperties()
 
   const sentinelRef = useRef<HTMLDivElement>(null)
+  const isFetchingRef = useRef(isFetchingNextPage)
+  isFetchingRef.current = isFetchingNextPage
 
   const onIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingRef.current) {
         fetchNextPage()
       }
     },
-    [fetchNextPage, hasNextPage, isFetchingNextPage],
+    [fetchNextPage, hasNextPage],
   )
 
   useEffect(() => {

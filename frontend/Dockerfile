@@ -15,6 +15,12 @@ RUN pnpm install --frozen-lockfile
 
 # Build
 COPY . .
+
+ARG VITE_API_URL=https://landchecker.lovenangelo.dev
+ARG VITE_USE_MOCK=false
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_USE_MOCK=$VITE_USE_MOCK
+
 RUN pnpm build
 
 # Production stage

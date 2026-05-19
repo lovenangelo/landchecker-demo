@@ -28,7 +28,7 @@ export function SearchPage() {
     <Layout>
       <div className="flex gap-8">
         {/* Sidebar filters — desktop only */}
-        <div className="hidden lg:block w-56 shrink-0 pt-1">
+        <div className="hidden lg:block w-56 shrink-0 pt-1 sticky top-14 self-start">
           <PropertyFilters />
         </div>
 

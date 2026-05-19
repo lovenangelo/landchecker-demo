@@ -36,9 +36,24 @@ export async function getProperties(
     }
   }
 
-  const params = { ...filters, page }
-  const res = await apiClient.get<PaginatedResponse<Property>>('/api/v1/properties', { params })
-  return res.data
+  const { min_price, max_price, ...rest } = filters
+  const params = {
+    ...rest,
+    ...(min_price != null ? { price_min: min_price } : {}),
+    ...(max_price != null ? { price_max: max_price } : {}),
+    page,
+  }
+  const res = await apiClient.get<{ properties: Property[]; meta: { current_page: number; total_pages: number; total_count: number } }>('/api/v1/properties', { params })
+  const { properties, meta } = res.data
+  return {
+    data: properties,
+    meta: {
+      current_page: meta.current_page,
+      total_pages: meta.total_pages,
+      total_count: meta.total_count,
+      next_page: meta.current_page < meta.total_pages ? meta.current_page + 1 : null,
+    },
+  }
 }
 
 export async function getProperty(id: number): Promise<Property> {
@@ -47,6 +62,6 @@ export async function getProperty(id: number): Promise<Property> {
     if (!p) throw new Error('Property not found')
     return p
   }
-  const res = await apiClient.get<{ data: Property }>(`/api/v1/properties/${id}`)
-  return res.data.data
+  const res = await apiClient.get<Property>(`/api/v1/properties/${id}`)
+  return res.data
 }

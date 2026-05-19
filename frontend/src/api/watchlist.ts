@@ -1,6 +1,6 @@
 import { apiClient } from '../lib/api-client'
 import { mockWatchlist, mockProperties } from '../mocks/properties'
-import type { WatchlistItem } from '../types/property'
+import type { WatchlistItem, Property } from '../types/property'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 
@@ -9,8 +9,14 @@ let nextId = 10
 
 export async function getWatchlist(): Promise<WatchlistItem[]> {
   if (USE_MOCK) return localWatchlist
-  const res = await apiClient.get<{ data: WatchlistItem[] }>('/api/v1/watchlist')
-  return res.data.data
+  const res = await apiClient.get<Property[]>('/api/v1/watchlists')
+  return res.data.map((p) => ({
+    id: p.id,
+    user_id: 0,
+    property_id: p.id,
+    property: p,
+    created_at: p.created_at,
+  }))
 }
 
 export async function addToWatchlist(propertyId: number): Promise<WatchlistItem> {
@@ -26,8 +32,8 @@ export async function addToWatchlist(propertyId: number): Promise<WatchlistItem>
     localWatchlist = [...localWatchlist, item]
     return item
   }
-  const res = await apiClient.post<{ data: WatchlistItem }>('/api/v1/watchlist', { property_id: propertyId })
-  return res.data.data
+  await apiClient.post('/api/v1/watchlists', { property_id: propertyId })
+  return { id: 0, user_id: 0, property_id: propertyId, property: {} as Property, created_at: new Date().toISOString() }
 }
 
 export async function removeFromWatchlist(propertyId: number): Promise<void> {
@@ -35,5 +41,5 @@ export async function removeFromWatchlist(propertyId: number): Promise<void> {
     localWatchlist = localWatchlist.filter((w) => w.property_id !== propertyId)
     return
   }
-  await apiClient.delete(`/api/v1/watchlist/${propertyId}`)
+  await apiClient.delete(`/api/v1/watchlists/${propertyId}`)
 }

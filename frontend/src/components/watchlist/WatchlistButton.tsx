@@ -1,4 +1,5 @@
 import { Heart } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useWatchlistIds, useAddToWatchlist, useRemoveFromWatchlist } from '@/hooks/useWatchlist'
@@ -19,7 +20,10 @@ export function WatchlistButton({ propertyId, className }: Props) {
   function toggle(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (!user) return
+    if (!user) {
+      toast.error('Sign in to save properties to your watchlist')
+      return
+    }
     if (isWatched) {
       remove.mutate(propertyId)
     } else {
@@ -34,7 +38,6 @@ export function WatchlistButton({ propertyId, className }: Props) {
       className={cn('rounded-full bg-white/80 hover:bg-white shadow-sm', className)}
       onClick={toggle}
       aria-label={isWatched ? 'Remove from watchlist' : 'Add to watchlist'}
-      title={!user ? 'Login to save properties' : undefined}
     >
       <Heart
         className={cn(
