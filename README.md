@@ -113,6 +113,7 @@ pnpm test:coverage
 ### Server requirements
 
 - Ubuntu 22.04+ with Docker + Docker Compose installed
+- Nginx installed on VPS (handles SSL and reverse proxy)
 - Ports **80** and **443** open in firewall
 - Domain `landchecker.lovenangelo.dev` pointed at the server's IP
 
@@ -163,11 +164,10 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 This starts:
 - PostgreSQL (internal only, no exposed port)
 - Redis (internal only, no exposed port)
-- Rails backend via Thruster on internal port 80
-- Nginx serving frontend static files on internal port 80
-- Caddy on ports 80/443 — handles SSL and routes traffic
+- Rails backend via Thruster on `127.0.0.1:3001`
+- Nginx serving frontend static files on `127.0.0.1:8080`
 
-Caddy automatically obtains a Let's Encrypt SSL certificate on first boot.
+VPS Nginx (installed on host) handles SSL termination and proxies to these ports.
 
 ### 5. Verify
 
@@ -187,10 +187,67 @@ curl https://landchecker.lovenangelo.dev/api/up
 ### Traffic routing (production)
 
 ```
-Browser → Caddy (443/SSL)
-           ├── /api/*   → backend:80  (Rails via Thruster)
-           ├── /cable   → backend:80  (ActionCable WebSocket)
-           └── /*       → frontend:80 (Nginx static SPA)
+Browser → VPS Nginx (443/SSL)
+           ├── /api/*   → 127.0.0.1:3001  (Rails via Thruster)
+           ├── /cable   → 127.0.0.1:3001  (ActionCable WebSocket)
+           └── /*       → 127.0.0.1:8080  (Nginx static SPA)
+```
+
+### VPS Nginx config
+
+Create `/etc/nginx/sites-available/landchecker`:
+
+```nginx
+server {
+    listen 80;
+    server_name landchecker.lovenangelo.dev;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name landchecker.lovenangelo.dev;
+
+    ssl_certificate /etc/letsencrypt/live/landchecker.lovenangelo.dev/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/landchecker.lovenangelo.dev/privkey.pem;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /cable {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable and reload:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/landchecker /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Get SSL cert via Certbot:
+
+```bash
+sudo certbot --nginx -d landchecker.lovenangelo.dev
 ```
 
 ---
@@ -206,9 +263,6 @@ docker compose -f docker-compose.prod.yml exec backend bin/rails db:migrate
 
 # Rebuild and redeploy a single service
 docker compose -f docker-compose.prod.yml up -d --build backend
-
-# View Caddy SSL certificate status
-docker compose -f docker-compose.prod.yml exec caddy caddy list-certificates
 ```
 
 ---
@@ -235,6 +289,5 @@ landchecker/
 │   ├── Dockerfile          # Production image (Nginx)
 │   └── nginx.conf
 ├── docker-compose.prod.yml # Production compose (all services)
-├── Caddyfile               # Caddy reverse proxy + SSL config
 └── .env.prod.example       # Production env template
 ```
