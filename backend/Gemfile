@@ -70,3 +70,6 @@ gem "faker", group: [:development, :test]
 # Performance
 gem "redis"
 gem "rack-attack"
+
+# Env
+gem "dotenv-rails", groups: [:development, :test]
