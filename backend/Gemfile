@@ -48,3 +48,25 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 end
+
+# Auth
+gem "devise"
+gem "devise-jwt"
+
+# Filtering & Search
+gem "ransack"
+
+# Pagination
+gem "kaminari"
+
+# CORS (for React frontend)
+gem "rack-cors"
+
+# Testing
+gem "rspec-rails", group: [:development, :test]
+gem "factory_bot_rails", group: [:development, :test]
+gem "faker", group: [:development, :test]
+
+# Performance
+gem "redis"
+gem "rack-attack"
