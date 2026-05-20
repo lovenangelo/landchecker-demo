@@ -13,5 +13,14 @@ test:
   database: landchecker_test
 
 production:
-  <<: *default
-  database: landchecker_production
+  primary:
+    <<: *default
+    database: landchecker_production
+  cache:
+    <<: *default
+    database: landchecker_production
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: landchecker_production
+    migrations_paths: db/queue_migrate
